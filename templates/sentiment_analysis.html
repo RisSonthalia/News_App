@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap">
+    {% comment %} <link rel="stylesheet" href="static/style_home.css">
+    <link rel="stylesheet" href="static/style.css"> {% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding-top: 130px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; 
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding-inline: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .chart-container {
+            text-align: center;
+            position: relative;
+            height: 400px;
+            width: 100%;
+            overflow: hidden; 
+        }
+
+        nav {
+            background-color: #1d1d1d;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        .nav-links ul {
+            list-style-type: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links ul li {
+            margin: 0;
+        }
+
+        .nav-links ul li a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links ul span {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-links ul li a:hover {
+            color: #555;
+        }
+
+        .fas.fa-star {
+            color: #f39c12;
+        }
+
+        .far.fa-star {
+            color: #ddd;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            margin-top: auto; 
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .social-icons a {
+            color: #fff;
+            margin: 0 10px;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            color: #bbb;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hamburger .bar {
+            width: 25px;
+            height: 3px;
+            right: 30px;
+            background-color: #fff;
+            margin: 4px;
+            transition: 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+                position: fixed;
+                right: 30px;
+                top: 16px;
+                z-index: 100;
+            }
+
+            .nav-links {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                gap: 0;
+                flex-direction: column;
+                background-color: #1d1d1d;
+                width: 100%;
+                height: 100vh;
+                text-align: center;
+                transition: 0.3s;
+                z-index: 99;
+                padding-top: 70px;
+            }
+
+            .nav-links ul {
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .nav-links.active {
+                left: 0;
+            }
+
+            .hamburger.active .bar:nth-child(2) {
+                opacity: 0;
+            }
+
+            .hamburger.active .bar:nth-child(1) {
+                transform: translateY(8px) rotate(45deg);
+            }
+
+            .hamburger.active .bar:nth-child(3) {
+                transform: translateY(-8px) rotate(-45deg);
+            }
+        }
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <a href="{% url 'home' %}"><img src="/static/assets/logo.png" alt="News App"></a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <ul>
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    {% comment %} <li><a href="#">Categories</a></li> {% endcomment %}
+                    <li><a href="{% url 'review_page' %}">Review</a></li>
+                    <li><a href="#footerid">Contact</a></li>
+                    {% if user.is_authenticated %}
+                    <li><a href="{% url 'sentiment_analysis' %}">Sentiment Analysis</a></li>
+                    <li class="user-section">
+                        <span>Hello, {{ user.first_name }}</span>
+                    </li>
+                    <li>
+                        <a href="{% url 'logoutUser' %}" class="logout-button">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li><a href="{% url 'login' %}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Sentiment Analysis</h2>
+            <form method="get">
+                <div class="select is-primary">
+                    <select name="filter" onchange="this.form.submit()">
+                        <option value="today" {% if filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="yesterday" {% if filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                        <option value="last_7_days" {% if filter == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="all_time" {% if filter == 'all_time' %}selected{% endif %}>All Time</option>
+                    </select>
+                </div>
+            </form>
+            <div class="chart-container">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content" id="footerid">
+            <p>&copy; 2024 News App. All rights reserved.</p>
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        var ctx = document.getElementById('sentimentChart').getContext('2d');
+        var sentimentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    label: 'Number of Articles',
+                    data: [{{ poscnt }}, {{ neucnt }}, {{ negcnt }}],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hamburger = document.getElementById('hamburger');
+            const navLinks = document.getElementById('navLinks');
+
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+
+            window.addEventListener('scroll', () => {
+                if (window.innerWidth <= 768) {
+                    navLinks.style.top = `${Math.max(70 - window.scrollY, 0)}px`;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
